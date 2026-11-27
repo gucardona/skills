@@ -2,6 +2,29 @@
 
 Gustavo's personal skills, published as a Claude Code plugin marketplace. Skills follow the Agent Skills spec (https://agentskills.io/specification), so other agents can use them too.
 
+## Default plugins (every project of Gustavo's)
+
+Every project, this one included, works with two plugins on:
+
+- **superpowers** (`superpowers@claude-plugins-official`): the process. Brainstorm into a design doc before building, write a plan, test first, debug from the root cause, verify before saying done, review before merging. Use its skills whenever one applies.
+- **ponytail** (`ponytail@ponytail`, from https://github.com/dietrichgebert/ponytail): the size of the change. The smallest complete change, no code nobody asked for, and a short note on what was skipped.
+
+superpowers decides how the work is done; ponytail decides how much code it takes. When they pull apart, keep superpowers' gates (design doc, tests, verification) and ponytail's size (no extra code, no extra files).
+
+Each project declares both in its committed `.claude/settings.json`, so a fresh clone asks to install them:
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "ponytail": { "source": { "source": "git", "url": "https://github.com/dietrichgebert/ponytail.git" } }
+  },
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true,
+    "ponytail@ponytail": true
+  }
+}
+```
+
 ## Layout
 
 ```text
