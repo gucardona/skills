@@ -1,12 +1,25 @@
 {
   "name": "gucardona-skills",
-  "description": "Skills pessoais do Gustavo para o Claude Code",
-  "owner": { "name": "gucardona" },
+  "description": "Gustavo's personal skills and agents for Claude Code",
+  "owner": {
+    "name": "gucardona"
+  },
+  "allowCrossMarketplaceDependenciesOn": [
+    "claude-plugins-official",
+    "ponytail",
+    "humanizer",
+    "i-have-adhd"
+  ],
   "plugins": [
+    {
+      "name": "workflow",
+      "source": "./plugins/workflow",
+      "description": "Development workflow with subagents: orchestrator, read-only reviewers (architect, security, QA, UX), Sonnet implementer, Haiku readers"
+    },
     {
       "name": "apps",
       "source": "./plugins/apps",
-      "description": "Padrão dos apps do Gustavo (gastos.app e irmãos): stack, UI, UX, testes, CI/CD"
+      "description": "The standard of Gustavo's apps (gastos.app and its siblings): stack, layout, UI, UX, tests, security, CI/CD"
     }
   ]
 }

@@ -1,0 +1,12 @@
+{
+  "name": "workflow",
+  "version": "1.0.0",
+  "description": "Gustavo's development workflow: an orchestrator, read-only reviewers (architect, security, QA, UX), a Sonnet implementer and Haiku readers, sized by the change",
+  "author": { "name": "gucardona" },
+  "dependencies": [
+    "superpowers@claude-plugins-official",
+    "ponytail@ponytail",
+    "humanizer@humanizer",
+    "i-have-adhd@i-have-adhd"
+  ]
+}

@@ -20,7 +20,7 @@ The `deploy` user and its SSH key are shared; each app gets its own system user,
 
 ## Skeleton to copy from gastos.app
 
-`go.mod` (rename module), `cmd/gastos/main.go` (+ `invite.go`), `internal/config`, `internal/db` (reset to a new `schema.sql` with your tables + users/sessions/invites, `baseVersion = 1`, empty `migrations`), `internal/api/{server,httpx,auth,invites,events,spa,housekeeping}.go` and `testutil_test.go`, `internal/events`, `internal/testutil`, `web/` (configs, `index.html`, `public/`, `src/{main,App,Shell,context}.tsx`, `src/api/client.ts`, `src/components/{Sheet,ListGroup,Segmented,Switch,Toast,ConfirmButton,ErrorBoundary,Icon,TabBar,Sidebar,nav,PageBar,pickers,EmojiPicker,ColorSwatches}`, `src/hooks/useAction.ts`, `src/lib/theme.ts`, `src/styles*`, `src/test/`, `e2e/` helpers), `.github/workflows/ci.yml`, `deploy/gastos@.service`, `scripts/{remote-deploy,invite}.sh`, `docs/ops/vdi-setup.md`, `README.md` (rewrite), `AGENTS.md` + `CLAUDE.md` (`@AGENTS.md`), `.claude/settings.json` (superpowers and ponytail on), `LICENSE` (Apache-2.0).
+`go.mod` (rename module), `cmd/gastos/main.go` (+ `invite.go`), `internal/config`, `internal/db` (reset to a new `schema.sql` with your tables + users/sessions/invites, `baseVersion = 1`, empty `migrations`), `internal/api/{server,httpx,auth,invites,events,spa,housekeeping}.go` and `testutil_test.go`, `internal/events`, `internal/testutil`, `web/` (configs, `index.html`, `public/`, `src/main.tsx`, `src/app/{App,Shell,context,nav,TabBar,Sidebar,PageBar}`, `src/ui/` (all of it), `src/api/client.ts`, `src/hooks/useAction.ts`, `src/lib/theme.ts`, `src/styles*`, `src/test/`, `src/structure.test.ts`, `e2e/` helpers, `.npmrc`), `.golangci.yml`, `.github/` (`workflows/ci.yml`, `workflows/codeql.yml`, `dependabot.yml`, `pull_request_template.md`, `ISSUE_TEMPLATE/`), `deploy/gastos@.service`, `scripts/{remote-deploy,invite}.sh`, `docs/ops/vdi-setup.md`, `README.md` + `README.pt-BR.md` (rewrite both), `docs/security.md` and `docs/decisions.md` (rewrite), `AGENTS.md` + `CLAUDE.md` (`@AGENTS.md`), `.claude/settings.json` (superpowers and ponytail on), `LICENSE` (Apache-2.0).
 
 Rename every `gastos`/`GASTOS_` (code, CI, unit, scripts, docs, manifest), then run all checks before the first commit.
 
@@ -29,6 +29,7 @@ Rename every `gastos`/`GASTOS_` (code, CI, unit, scripts, docs, manifest), then 
 ```bash
 gofmt -l .            # prints nothing
 go vet ./...
+golangci-lint run      # only what the branch adds (new-from-merge-base: origin/master)
 go test -race ./...   # Windows/Git Bash: export PATH="$PATH:/c/msys64/ucrt64/bin" first
 cd web
 npm run lint
@@ -47,7 +48,7 @@ rm -f tsconfig.tsbuildinfo   # do not commit it
 
 ## CI (`.github/workflows/ci.yml`, copy it)
 
-On every push and PR: `backend` (gofmt, vet, race tests), `vuln` (govulncheck, `npm audit --omit=dev --audit-level=high`), `web` (lint, typecheck, vitest), `e2e` (build + Playwright, report uploaded on failure). On push: `build` (needs all four) builds `CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "-s -w -X main.version=${GITHUB_SHA::7}"`. Only `master`: `deploy` (environment `production`, concurrency group so two merges never deploy at once) uploads the binary to `/opt/<app>/production/releases/<sha>/` and runs `scripts/remote-deploy.sh`, then smoke-tests `$PUBLIC_URL/healthz` (10 tries). Secrets: `DEPLOY_HOST`, `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`; variable: `PUBLIC_URL`. `permissions: contents: read`.
+On every push and PR: `backend` (gofmt, vet, race tests), `lint` (golangci-lint, full history fetched for the merge base), `zizmor` (audits the workflows), `vuln` (govulncheck, `npm audit --omit=dev --audit-level=high`), `web` (lint, typecheck, vitest), `e2e` (build + Playwright, report uploaded on failure). On push: `build` (needs all four) builds `CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "-s -w -X main.version=${GITHUB_SHA::7}"`. Only `master`: `deploy` (environment `production`, concurrency group so two merges never deploy at once) uploads the binary to `/opt/<app>/production/releases/<sha>/` and runs `scripts/remote-deploy.sh`, then smoke-tests `$PUBLIC_URL/healthz` (10 tries). Secrets: `DEPLOY_HOST`, `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`; variable: `PUBLIC_URL`. `permissions: contents: read`. Every action is pinned to a full commit SHA with the version in a comment, every checkout has `persist-credentials: false`, and the `build` job uses no dependency cache. `codeql.yml` scans Go and TypeScript on push to master, on PRs and weekly. Required checks on master: backend, lint, zizmor, vuln, web, e2e, build. Details and reasons in [security.md](security.md).
 
 ## VPS
 
@@ -59,8 +60,9 @@ On every push and PR: `backend` (gofmt, vet, race tests), `vuln` (govulncheck, `
 
 ## Git and PR flow
 
-- Branch from an updated `master`: `feat/<topic>`, `fix/<topic>`, `chore/…`. Never commit to `master`.
-- Commits in pt-BR Conventional style, subject in lower case describing the effect for the person: `feat: avisa antes de lançar um igual ao que acabou de ser lançado`, `fix(web): …`, `test(e2e): …`. End each message with the Co-Authored-By trailer the harness gives.
-- PR title in pt-BR; body in pt-BR: "O que muda" (behavior, in the person's words), "Banco" (migration and rollback, or "sem mudança"), "Testes" (each suite and its result). End with the harness's attribution line.
+- Every change starts from an issue, opened with one of the forms (`1-bug.yml`, `2-feature.yml`, `3-task.yml`; blank issues are off, vulnerabilities go to private reporting). A bug gets steps, expected and actual.
+- Branch from an updated `master`: `feat/<topic>`, `fix/<topic>`, `chore/…`, `docs/…`. Never commit to `master`.
+- Commits in English, Conventional style, subject in lower case describing the effect for the person: `feat: warn before adding a duplicate of the last transaction`, `fix(web): …`, `test(e2e): …`. The body says why and ends with `Refs #N` and the Co-Authored-By trailer the harness gives.
+- PR title in English; the body follows `.github/pull_request_template.md`: `Closes #N`, what changes, why, how it was tested (each suite and its result), risk (migration and rollback, auth or money, screenshots). End with the harness's attribution line.
 - Merge with a merge commit (`gh pr merge N --merge`) only after CI is green **and Gustavo explicitly says to**. Then watch the master run to the end and check `curl https://<app>.<domain>/healthz` → `ok`, and tell Gustavo what to try.
-- Specs and plans in pt-BR under `docs/superpowers/specs/` and `docs/superpowers/plans/` (`YYYY-MM-DD-<topic>…md`), committed.
+- Specs and plans in English under `docs/superpowers/specs/` and `docs/superpowers/plans/` (`YYYY-MM-DD-<topic>…md`), committed, and each lasting decision gets a line in `docs/decisions.md`.
