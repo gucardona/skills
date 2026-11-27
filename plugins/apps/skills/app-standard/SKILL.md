@@ -71,6 +71,7 @@ The tools site that links them does not exist yet; when it does, add a row for i
 
 ## Rules that hold in every app
 
+- **superpowers and ponytail are on in every app.** The repo commits `.claude/settings.json` with `"enabledPlugins": {"superpowers@claude-plugins-official": true, "ponytail@ponytail": true}` and the ponytail marketplace under `extraKnownMarketplaces` (the exact file is in the AGENTS.md of github.com/gucardona/skills), and its `AGENTS.md` says so: superpowers for the process (design doc, plan, tests first, verification, review), ponytail for the size of each change.
 - **Every app has the full pipeline from its first commit**, the same as gastos: `.github/workflows/ci.yml` with backend, vuln, web and e2e jobs on every push and PR, then build and the automatic deploy of `master` with healthz, rollback and the public URL smoke test ([references/ops.md](references/ops.md)). An app without it is not ready for its first PR; do not deploy by hand.
 - **Production data is never reset.** Schema changes are new migration files that only add; never edit `schema.sql` or a published migration; every migration gets its rollback documented and tested ([references/backend.md](references/backend.md)).
 - **Never paste secrets** (API keys, `*_SECRET_KEY`, deploy keys) in chat, code, docs or commits; they live in `/etc/<app>/production.env` (root, 600) and GitHub secrets.

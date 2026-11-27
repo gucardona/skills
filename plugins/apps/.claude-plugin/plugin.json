@@ -1,6 +1,6 @@
 {
   "name": "apps",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Padrão dos apps do Gustavo (gastos.app e irmãos): stack, UI, UX, testes, CI/CD",
   "author": { "name": "gucardona" }
 }
