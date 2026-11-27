@@ -6,7 +6,7 @@ Skills pessoais do Gustavo para o Claude Code (e outros agentes que seguem o pad
 
 | Plugin | Skill | Para quê |
 |---|---|---|
-| `gupa` | `app-standard` | O padrão dos apps `*.gupa.dev`, com o [gastos.app](https://github.com/gucardona/gastos.app) como referência: stack, estrutura, UI, UX, textos, testes, CI/CD e deploy. Entra sozinha ao criar ou mudar um desses apps. |
+| `apps` | `app-standard` | O padrão dos seus apps web, com o [gastos.app](https://github.com/gucardona/gastos.app) como referência: stack, estrutura, UI, UX, textos, testes, CI/CD e deploy. Entra sozinha ao criar ou mudar um desses apps. |
 
 ## Instalar
 
@@ -14,7 +14,7 @@ No Claude Code:
 
 ```text
 /plugin marketplace add gucardona/skills
-/plugin install gupa@gucardona-skills
+/plugin install apps@gucardona-skills
 ```
 
 O repositório é privado: o Claude Code usa as credenciais do git da máquina. Se o `add` falhar, rode `gh auth login` e `gh auth setup-git` uma vez.

@@ -1,6 +1,0 @@
-{
-  "name": "gupa",
-  "version": "1.0.0",
-  "description": "Padrão dos apps *.gupa.dev (gastos.app e irmãos): stack, UI, UX, testes, CI/CD",
-  "author": { "name": "gucardona" }
-}

@@ -6,7 +6,7 @@ Reference: `.github/workflows/ci.yml`, `deploy/`, `scripts/`, `docs/ops/` and `w
 
 | | gastos (reference) | a new app `<app>` |
 |---|---|---|
-| Public URL | https://gastos.gupa.dev | https://`<app>`.gupa.dev |
+| Public URL | `https://gastos.<domain>` | `https://<app>.<domain>` |
 | Port on 127.0.0.1 | 8000 | the next one not in the "Apps in the family" table of SKILL.md (8001, 8002…); Gustavo confirms it on the VPS with `ss -ltnp`, then add the row |
 | Binary / Go module | `gastos` | `<app>` |
 | systemd unit | `gastos@.service` (instance `production`) | `<app>@.service` |
@@ -53,7 +53,7 @@ On every push and PR: `backend` (gofmt, vet, race tests), `vuln` (govulncheck, `
 
 - `remote-deploy.sh <env> <sha> <port>`: atomically repoints `current` to the release, restarts `<app>@<env>`, polls `http://127.0.0.1:<port>/healthz` for 10 s, keeps the 5 newest releases, and rolls back to the previous release if healthz fails.
 - systemd unit (copy `deploy/gastos@.service`): `User=<app>`, `EnvironmentFile=/etc/<app>/%i.env`, `ExecStart=/opt/<app>/%i/current/<app>`, `Restart=on-failure`, and the hardening block (`NoNewPrivileges`, `ProtectSystem=strict`, `ProtectHome`, `ReadWritePaths=/var/lib/<app>/%i`, `PrivateTmp`, `PrivateDevices`, `ProtectKernel*`, `RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX`, `CapabilityBoundingSet=`, `SystemCallFilter=@system-service`, `LockPersonality`, `RestrictNamespaces`).
-- Caddy (HTTPS automatic): `<app>.gupa.dev { reverse_proxy 127.0.0.1:<port> }`.
+- Caddy (HTTPS automatic): `<app>.<domain> { reverse_proxy 127.0.0.1:<port> }`.
 - `deploy` may only restart that service: `/etc/sudoers.d/<app>-deploy` with `deploy ALL=(root) NOPASSWD: /usr/bin/systemctl restart <app>@production` (check with `visudo -c`). Gustavo runs the one-time root setup from `docs/ops/vdi-setup.md`; write the steps down, never run root commands on the server.
 - Backups: daily local copy by the app; off-site encrypted copy by a separate timer (`docs/ops/backup.md`).
 
@@ -62,5 +62,5 @@ On every push and PR: `backend` (gofmt, vet, race tests), `vuln` (govulncheck, `
 - Branch from an updated `master`: `feat/<topic>`, `fix/<topic>`, `chore/…`. Never commit to `master`.
 - Commits in pt-BR Conventional style, subject in lower case describing the effect for the person: `feat: avisa antes de lançar um igual ao que acabou de ser lançado`, `fix(web): …`, `test(e2e): …`. End each message with the Co-Authored-By trailer the harness gives.
 - PR title in pt-BR; body in pt-BR: "O que muda" (behavior, in the person's words), "Banco" (migration and rollback, or "sem mudança"), "Testes" (each suite and its result). End with the harness's attribution line.
-- Merge with a merge commit (`gh pr merge N --merge`) only after CI is green **and Gustavo explicitly says to**. Then watch the master run to the end and check `curl https://<app>.gupa.dev/healthz` → `ok`, and tell Gustavo what to try.
+- Merge with a merge commit (`gh pr merge N --merge`) only after CI is green **and Gustavo explicitly says to**. Then watch the master run to the end and check `curl https://<app>.<domain>/healthz` → `ok`, and tell Gustavo what to try.
 - Specs and plans in pt-BR under `docs/superpowers/specs/` and `docs/superpowers/plans/` (`YYYY-MM-DD-<topic>…md`), committed.

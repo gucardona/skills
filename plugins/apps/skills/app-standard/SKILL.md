@@ -1,6 +1,6 @@
 ---
 name: app-standard
-description: Use when starting, scaffolding, planning or changing any of Gustavo's own web apps (the gastos.app family, published under *.gupa.dev and linked from the tools site), or when Gustavo asks for "o mesmo padrão", "igual ao gastos", same UI/UX/code/stack/deploy as the other apps, a new app for the tools site, or a screen, component, endpoint, migration, test or deploy step in one of these apps.
+description: Use when starting, scaffolding, planning or changing any of Gustavo's own web apps (the gastos.app family, each on a subdomain of the apps' domain and linked from the tools site), or when Gustavo asks for "o mesmo padrão", "igual ao gastos", same UI/UX/code/stack/deploy as the other apps, a new app for the tools site, or a screen, component, endpoint, migration, test or deploy step in one of these apps.
 ---
 
 # Gustavo's app standard (gastos.app is the reference)
@@ -8,6 +8,8 @@ description: Use when starting, scaffolding, planning or changing any of Gustavo
 ## Overview
 
 Every app Gustavo builds is a sibling of **gastos.app**: same stack, same layout, same look, same UX rules, same tests, same deploy. The reference implementation is public: https://github.com/gucardona/gastos.app (locally `C:\Users\Gustavo\dev\gastos.app`).
+
+**`<domain>`** in this skill is the apps' domain, which may change: read the current one from the `PUBLIC_URL` repository variable of gastos.app (`gh variable get PUBLIC_URL --repo gucardona/gastos.app`) and never write it into a skill.
 
 **Core principle: copy, don't invent.** When the standard below or the reference repo answers a question (a color, a component, an error format, a deploy step), use that answer. Pick something new only where the reference has nothing, and say so to Gustavo as your call.
 
@@ -43,7 +45,7 @@ Read the reference file for the area you are working on before writing code ther
 2. **Start from the reference repo.** Clone gastos.app into a scratch folder and copy the skeleton (list in references/ops.md "Skeleton to copy"), then rename: Go module, binary, `GASTOS_` env prefix → `<APP>_`, systemd unit, paths, manifest, page title. Delete the finance-specific packages and screens; keep the shell, components, auth, db, middleware, CI, deploy.
 3. **Keep tokens.css, styles.css base rules and the components identical** (copy them; do not restyle). Screens are new; the vocabulary they are built from is not.
 4. Write the spec in pt-BR at `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` and get Gustavo's approval before building.
-5. Pick the next free port and the subdomain `<app>.gupa.dev` ([references/ops.md](references/ops.md)), and add it to the tools site list.
+5. Pick the next free port and the subdomain `<app>.<domain>` ([references/ops.md](references/ops.md)), and add it to the tools site list.
 6. Green locally (all commands in references/ops.md "Before a PR"), PR, wait for Gustavo's ok to merge, watch the deploy and `healthz`.
 
 ## Shaping a new app's skeleton
@@ -57,7 +59,7 @@ Read the reference file for the area you are working on before writing code ther
 
 | App | URL | Port | Repo |
 |---|---|---|---|
-| gastos | https://gastos.gupa.dev | 8000 | github.com/gucardona/gastos.app |
+| gastos | `https://gastos.<domain>` | 8000 | github.com/gucardona/gastos.app |
 
 The tools site that links them does not exist yet; when it does, add a row for it and say here how to add a link.
 

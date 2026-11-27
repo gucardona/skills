@@ -16,7 +16,7 @@ plugins/<plugin>/
 scripts/validate.mjs                checks everything below; scripts/validate.test.mjs tests the checker
 ```
 
-Plugins group skills by area: `gupa` holds the standard of the `*.gupa.dev` apps. Make a new plugin only for a new area; otherwise add the skill to the plugin it belongs to.
+Plugins group skills by area: `apps` holds the standard of Gustavo's web apps. Never write the apps' domain name in this repo: it may change, and the skills read it from the gastos.app repo. Make a new plugin only for a new area; otherwise add the skill to the plugin it belongs to.
 
 ## Writing or changing a skill
 
