@@ -1,0 +1,12 @@
+{
+  "name": "gucardona-skills",
+  "description": "Skills pessoais do Gustavo para o Claude Code",
+  "owner": { "name": "gucardona" },
+  "plugins": [
+    {
+      "name": "gupa",
+      "source": "./plugins/gupa",
+      "description": "Padrão dos apps *.gupa.dev (gastos.app e irmãos): stack, UI, UX, testes, CI/CD"
+    }
+  ]
+}
