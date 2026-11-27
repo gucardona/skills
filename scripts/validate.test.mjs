@@ -57,3 +57,38 @@ test("a plugin whose plugin.json name differs from its marketplace entry fails",
   assert.equal(r.ok, false);
   assert.match(r.out, /plugin\.json/);
 });
+
+const withAgent = (frontmatter) => {
+  const root = repo();
+  mkdirSync(join(root, "plugins/p/agents"));
+  writeFileSync(join(root, "plugins/p/agents/rev.md"), `---\n${frontmatter}\n---\n\nBody\n`);
+  return root;
+};
+
+test("plugin agents are checked: name, description, model and ignored fields", () => {
+  const good = run(withAgent("name: rev\ndescription: Use to review.\nmodel: haiku"));
+  assert.equal(good.ok, true, good.out);
+  const cases = [
+    ["name: other\ndescription: Use to review.", "file name"],
+    ["name: rev\ndescription: Reviews things.", "Use when"],
+    ["name: rev\ndescription: Use to review.\nmodel: gpt-5", "model"],
+    ["name: rev\ndescription: Use to review.\npermissionMode: bypassPermissions", "permissionMode"],
+  ];
+  for (const [fm, word] of cases) {
+    const r = run(withAgent(fm));
+    assert.equal(r.ok, false, `should fail: ${fm}`);
+    assert.match(r.out, new RegExp(word));
+  }
+});
+
+test("a dependency on another marketplace must be allowed by the marketplace", () => {
+  const root = repo();
+  writeFileSync(join(root, "plugins/p/.claude-plugin/plugin.json"), JSON.stringify({ name: "p", dependencies: ["x@other"] }));
+  const r = run(root);
+  assert.equal(r.ok, false);
+  assert.match(r.out, /allowCrossMarketplaceDependenciesOn/);
+  const market = { name: "m", owner: { name: "o" }, allowCrossMarketplaceDependenciesOn: ["other"], plugins: [{ name: "p", source: "./plugins/p" }] };
+  writeFileSync(join(root, ".claude-plugin/marketplace.json"), JSON.stringify(market));
+  const ok = run(root);
+  assert.equal(ok.ok, true, ok.out);
+});

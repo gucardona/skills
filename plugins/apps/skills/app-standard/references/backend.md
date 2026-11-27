@@ -14,11 +14,19 @@ internal/testutil/       TempDir that works on Windows with SQLite WAL
 web/embed.go             //go:embed all:dist → web.Dist()
 ```
 
+The layout is the one go.dev recommends: `cmd/` for binaries, `internal/` packaged by domain. No `pkg/`, `util` or `common` package, and no layered folders (`handlers/`, `services/`, `repositories/`): a package is named for what it owns.
+
 One Go module named after the app (`module tarefas`). No framework, no ORM, no DI container. Dependencies: `modernc.org/sqlite` and `golang.org/x/crypto/bcrypt`; everything else is the standard library (SSE is plain `net/http` with `http.ResponseController` flushing, fed by the in-process bus in `internal/events`).
+
+## Style
+
+- Follow the [Uber Go Style Guide](https://github.com/uber-go/guide), checked by `golangci-lint` with the `.golangci.yml` from gastos (errcheck, godot, gosec, govet, revive, staticcheck, goimports). The lint reports only what a branch adds (`new-from-merge-base: origin/master`), so an older finding never blocks a PR.
+- Uber rules that bite most: unexported package-level vars start with `_` (errors keep `err`); no parameter named after a builtin (`min`, `max`, `len`); handle every error or assign it to `_` with a comment saying why; exit only in `main`.
+- Every package, and every top-level func, type, const and var, exported or not, has a doc comment per [Go Doc Comments](https://go.dev/doc/comment): it starts with the name, says what the thing does or returns in plain words, and ends with a period. Say what is true of the code; a comment that drifts from it is a bug.
 
 ## main.go
 
-- `log := slog.New(slog.NewJSONHandler(os.Stdout, nil))`; log messages in pt-BR ("ouvindo", "encerrando"), keys in English.
+- `log := slog.New(slog.NewJSONHandler(os.Stdout, nil))`; log messages and keys in English ("listening", "shutting down").
 - `var version = "dev"`, set by CI with `-ldflags "-X main.version=<sha7>"`.
 - `import _ "time/tzdata"` so the timezone works on any server.
 - `http.Server{ReadHeaderTimeout: 10 * time.Second}`; no WriteTimeout if there is SSE.

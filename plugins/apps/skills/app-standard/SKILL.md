@@ -17,7 +17,7 @@ Every app Gustavo builds is a sibling of **gastos.app**: same stack, same layout
 
 | Area | The standard |
 |---|---|
-| Backend | Go (latest stable, go.mod floor), `net/http` with Go 1.22+ method routing, `log/slog` JSON, no web framework |
+| Backend | Go (latest stable, go.mod floor), `net/http` with Go 1.22+ method routing, `log/slog` JSON, no web framework. go.dev layout (`cmd/<app>`, `internal/<domain>`), the [Uber Go Style Guide](https://github.com/uber-go/guide) enforced by golangci-lint, a doc comment on every declaration |
 | Database | SQLite via `modernc.org/sqlite` (pure Go, `CGO_ENABLED=0`), WAL, frozen `schema.sql` + additive numbered migrations |
 | Frontend | React 19 + Vite + TypeScript (strict), TanStack Query, `react-router`, Biome lint, no UI kit, no CSS framework |
 | One binary | `web/dist` is embedded (`//go:embed all:dist`); Go serves API under `/api` and the SPA; `/healthz` answers `ok` |
@@ -25,18 +25,21 @@ Every app Gustavo builds is a sibling of **gastos.app**: same stack, same layout
 | Navigation | phone: floating pill tab bar + round "+" apart; ≥900px: 248px sidebar. Settings ("Ajustes") only through the avatar |
 | Forms | bottom `Sheet` on a native `<dialog>` (side panel on desktop), grouped `ListGroup`/`ListRow`, `Segmented`, `Switch` |
 | Delete | two-step `ConfirmButton` ("Excluir X" → "Confirmar exclusão"), and a toast with "Desfazer" when it can be recreated. Never `window.confirm`, never a confirm modal |
-| Language | UI and docs in pt-BR; code, comments, identifiers and tests in English; money in cents (int), dates `YYYY-MM-DD` |
+| Language | UI copy in pt-BR. Everything else in English: code, comments, doc comments, tests, docs, commits, PRs, issues. README in both (`README.md` + `README.pt-BR.md`, same sections, language switch on top). Money in cents (int), dates `YYYY-MM-DD` |
 | API errors | `{"error":{"code","message","fields"}}`, message in pt-BR ready to show |
 | Auth | own session cookie (httpOnly, SameSite=Lax), bcrypt, rate-limited login, invite codes to sign up |
-| Tests | `go test -race` with real SQLite via httptest; Vitest + Testing Library by role and name; Playwright e2e on desktop and Pixel 5 against the real binary |
+| Tests | `go test -race` with real SQLite via httptest; Vitest + Testing Library by role and name; Playwright e2e on desktop and Pixel 5 against the real binary ([references/testing.md](references/testing.md)) |
+| Security, CI | actions pinned by SHA, zizmor, CodeQL, golangci-lint with gosec, govulncheck, npm audit, `web/.npmrc` without install scripts, 7-day cooldown on new releases ([references/security.md](references/security.md)) |
 | Deploy | GitHub Actions: tests → build Linux binary → scp to VPS → `remote-deploy.sh` (symlink, restart systemd `<app>@production`, healthz, auto rollback) → smoke test public URL. Caddy in front. No Docker |
-| Git | branch `feat/…` or `fix/…` from `master`; commits pt-BR Conventional (`feat: …`, `fix(web): …`); PR; merge only after CI is green **and Gustavo says so** (merge = production deploy) |
+| Git | every change starts from an issue (forms: bug, feature, task) and ends in a PR that says `Closes #N`; branch `feat/…` or `fix/…` from `master`; English Conventional commits (`feat: …`, `fix(web): …`); merge only after CI is green **and Gustavo says so** (merge = production deploy) |
 
 Read the reference file for the area you are working on before writing code there:
 
 - **[references/backend.md](references/backend.md)**: Go layout, server and middleware chain, handlers, errors, decode, auth, SQLite, migrations, config, Go tests.
 - **[references/frontend.md](references/frontend.md)**: web layout, exact tokens, the base CSS, every house component and when to use it, data fetching, theming, PWA, Vitest conventions.
 - **[references/ux.md](references/ux.md)**: interaction rules and pt-BR copy (buttons, toasts, errors, empty states, confirmations, alignment, accessibility).
+- **[references/testing.md](references/testing.md)**: what each test level covers, how it is written and named, and what never goes in a test.
+- **[references/security.md](references/security.md)**: app security controls, CI/CD supply chain, secrets, and the threat model every app keeps in `docs/security.md`.
 - **[references/ops.md](references/ops.md)**: CI workflow, VPS layout, systemd unit, deploy script, Caddy, backups, Playwright setup, git and PR flow, the per-app names and ports.
 
 ## Starting a new app
@@ -44,7 +47,7 @@ Read the reference file for the area you are working on before writing code ther
 1. **Ask only what is truly open**, in one message: the app's name (slug, e.g. `tarefas`), what it does and who uses it, and whether it needs a login of its own (see "Open decisions"). Everything else comes from this skill.
 2. **Start from the reference repo.** Clone gastos.app into a scratch folder and copy the skeleton (list in references/ops.md "Skeleton to copy"), then rename: Go module, binary, `GASTOS_` env prefix → `<APP>_`, systemd unit, paths, manifest, page title. Delete the finance-specific packages and screens; keep the shell, components, auth, db, middleware, CI, deploy.
 3. **Keep tokens.css, styles.css base rules and the components identical** (copy them; do not restyle). Screens are new; the vocabulary they are built from is not.
-4. Write the spec in pt-BR at `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` and get Gustavo's approval before building.
+4. Open the issue, then write the spec in English at `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` and get Gustavo's approval before building.
 5. Pick the next free port and the subdomain `<app>.<domain>` ([references/ops.md](references/ops.md)), and add it to the tools site list.
 6. Green locally (all commands in references/ops.md "Before a PR"), PR, wait for Gustavo's ok to merge, watch the deploy and `healthz`.
 
@@ -72,7 +75,8 @@ The tools site that links them does not exist yet; when it does, add a row for i
 ## Rules that hold in every app
 
 - **superpowers and ponytail are on in every app.** The repo commits `.claude/settings.json` with `"enabledPlugins": {"superpowers@claude-plugins-official": true, "ponytail@ponytail": true}` and the ponytail marketplace under `extraKnownMarketplaces` (the exact file is in the AGENTS.md of github.com/gucardona/skills), and its `AGENTS.md` says so: superpowers for the process (design doc, plan, tests first, verification, review), ponytail for the size of each change.
-- **Every app has the full pipeline from its first commit**, the same as gastos: `.github/workflows/ci.yml` with backend, vuln, web and e2e jobs on every push and PR, then build and the automatic deploy of `master` with healthz, rollback and the public URL smoke test ([references/ops.md](references/ops.md)). An app without it is not ready for its first PR; do not deploy by hand.
+- **Work goes through the `workflow` plugin.** Its `dev-workflow` skill sizes each change and says which reviewer agents run (architect, security, QA, UX).
+- **Every app has the full pipeline from its first commit**, the same as gastos: `.github/workflows/ci.yml` with backend, lint, zizmor, vuln, web and e2e jobs, plus `codeql.yml`, on every push and PR, then build and the automatic deploy of `master` with healthz, rollback and the public URL smoke test ([references/ops.md](references/ops.md)). An app without it is not ready for its first PR; do not deploy by hand.
 - **Production data is never reset.** Schema changes are new migration files that only add; never edit `schema.sql` or a published migration; every migration gets its rollback documented and tested ([references/backend.md](references/backend.md)).
 - **Never paste secrets** (API keys, `*_SECRET_KEY`, deploy keys) in chat, code, docs or commits; they live in `/etc/<app>/production.env` (root, 600) and GitHub secrets.
 - **Ask before merging**: merging to `master` deploys to production.
@@ -86,7 +90,9 @@ The tools site that links them does not exist yet; when it does, add a row for i
 | Tailwind, shadcn, MUI, Inter, an indigo palette | tokens.css + styles.css + Geist, copied as they are |
 | A confirm dialog for delete | `ConfirmButton` two-step, plus "Desfazer" toast when possible |
 | Docker / docker-compose | static binary + systemd unit + `remote-deploy.sh` |
-| Monorepo with workspaces (`apps/api`, `apps/web`) | `cmd/<app>`, `internal/…`, `web/` in one Go module |
+| Monorepo with workspaces (`apps/api`, `apps/web`), or `frontend/` + `backend/` folders | `cmd/<app>`, `internal/…`, `web/` in one Go module: the web build ships inside the binary |
+| `pkg/`, `util`, `common`, or layered folders (`handlers/`, `services/`, `repositories/`) | packages by domain under `internal/` |
+| A PR without an issue, or docs and commits in pt-BR | open the issue first; English for everything but the UI |
 | Postgres "to be safe" | SQLite file in `/var/lib/<app>/production` |
 | Prisma/ORM, zod on the server | `database/sql` with plain SQL; validation in the handler, field errors in pt-BR |
 | Centered text, cards with shadows | text left, values right; flat white groups (radius 22) on the gray paper, no shadows except the floating tab bar |

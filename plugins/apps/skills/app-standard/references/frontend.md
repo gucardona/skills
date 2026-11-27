@@ -1,6 +1,6 @@
 # Frontend standard
 
-Reference: `web/` in https://github.com/gucardona/gastos.app (local `C:\Users\Gustavo\dev\gastos.app\web`). Copy `tokens.css`, `styles.css`, the components listed below, `api/client.ts`, `hooks/useAction.ts`, `lib/theme.ts`, `test/setup.ts`, the configs; then delete what is finance-only.
+Reference: `web/` in https://github.com/gucardona/gastos.app (local `C:\Users\Gustavo\dev\gastos.app\web`). Copy `tokens.css`, `styles.css`, `app/`, `ui/`, `structure.test.ts`, `api/client.ts`, `hooks/useAction.ts`, `lib/theme.ts`, `test/setup.ts`, the configs; then delete what is finance-only.
 
 ## Stack and configs
 
@@ -17,19 +17,21 @@ Reference: `web/` in https://github.com/gucardona/gastos.app (local `C:\Users\Gu
 ```text
 web/src/
   main.tsx          font import, styles.css, applyStoredTheme(), QueryClient (no retry on 4xx, no refetch on focus), BrowserRouter
-  App.tsx           <Routes>: /login outside; everything else inside <Shell/>; unknown → Navigate "/"
-  Shell.tsx         loads me + base data, redirects to /login on 401, builds the context, renders Sidebar + main + TabBar, ToastProvider, ErrorBoundary, the global "+" sheet, the N shortcut
-  context.ts        AppCtx + useApp()
+  app/              the shell: App.tsx (<Routes>: /login outside, the rest inside <Shell/>), Shell.tsx (loads me + base data, 401 → /login, builds the context, Sidebar + main + TabBar, ToastProvider, ErrorBoundary, the global "+" sheet, the N shortcut), context.ts (AppCtx + useApp()), nav, TabBar, Sidebar, PageBar
+  ui/               the house kit (below): generic components, each with its .test.tsx, no domain knowledge
+  features/<domain>/ the sheets and lists of one domain (transactions, categories, members…)
   api/              client.ts (fetch wrapper, ApiError), queries.ts (useQuery hooks), types.ts (mirrors the Go DTOs)
-  components/       house components (below), each with its .test.tsx
-  hooks/useAction.ts
+  hooks/            useAction, useUndo…
   lib/              pure helpers with tests (dates, money, search, theme…)
   pages/            one file per destination; settings/ holds one Section per Ajustes screen
   styles.css        all rules, grouped by area with a /* ---------- area ---------- */ comment
   styles/tokens.css colors, font, radii
   styles/*.test.ts  tests that read the CSS and pin system rules (alignment, focus, tap targets, small phones)
   test/             setup.ts, fixtures.tsx (appCtx, renderApp, mockFetch, bodyOf, sample data)
+  structure.test.ts the import rules below
 ```
+
+Import direction, enforced by `structure.test.ts`: `ui/` imports only `ui/`, `lib/` and API types; `api/` and `lib/` import only `api/` and `lib/`; a feature imports no page, no other feature, and from `app/` only the context; a page imports no other page (Settings and its sections excepted); `hooks/` import no page and no feature. A component used by two features moves to `ui/` (generic) or stays in the feature that owns the data and is passed in as a prop.
 
 Routes are pt-BR slugs (`/lancamentos`, `/ajustes/:section?`).
 
@@ -68,11 +70,11 @@ Theme: `lib/theme.ts` stores `light`/`dark` in localStorage (try/catch), sets `d
 
 ## Navigation
 
-- `components/nav.ts`: `navItems(...)` is the single list of destinations (3–5, each `{to, label, icon, end}`), used by both bars.
+- `app/nav.ts`: `navItems(...)` is the single list of destinations (3–5, each `{to, label, icon, end}`), used by both bars.
 - Phone (`TabBar`): fixed floating pill (`.tabbar-pill`, 58px tall, translucent) with icon + label per destination, and the round `.fab` "+" (58px, accent) apart on the right for the main creation action. Pending counters are a `.badge` with the number only (99+).
 - Desktop ≥900px (`Sidebar`): 248px sticky column, app/container name at the top, the destinations, the main action as a full-width `.btn`, and the profile/avatar at the bottom.
 - Ajustes is never a tab: it opens from the avatar (top right on phones, sidebar bottom on desktop). It is a list of rows with chevrons, each to its own screen (`/ajustes/<section>`); on desktop master-detail.
-- Icons: `components/Icon.tsx` inline SVG strokes (22px, stroke 1.7). Emojis are used as user-chosen icons for data (categories, methods).
+- Icons: `ui/Icon.tsx` inline SVG strokes (22px, stroke 1.7). Emojis are used as user-chosen icons for data (categories, methods).
 
 ## Components (use these; do not make look-alikes)
 

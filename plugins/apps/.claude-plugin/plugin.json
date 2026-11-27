@@ -1,6 +1,11 @@
 {
   "name": "apps",
-  "version": "1.1.0",
-  "description": "Padrão dos apps do Gustavo (gastos.app e irmãos): stack, UI, UX, testes, CI/CD",
-  "author": { "name": "gucardona" }
+  "version": "1.2.0",
+  "description": "The standard of Gustavo's apps (gastos.app and its siblings): stack, layout, UI, UX, tests, security, CI/CD",
+  "author": {
+    "name": "gucardona"
+  },
+  "dependencies": [
+    "workflow"
+  ]
 }

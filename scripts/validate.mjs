@@ -1,7 +1,7 @@
 // Checks the marketplace, every plugin and every skill against the Agent Skills spec (agentskills.io/specification)
 // and the Claude Code plugin layout. No dependencies. Usage: node scripts/validate.mjs [repo root]
 import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 
 const root = resolve(process.argv[2] ?? join(import.meta.dirname, ".."));
 const errors = [];
@@ -19,7 +19,7 @@ const readJSON = (path) => {
 function frontmatter(text) {
   const m = /^---\r?\n([\s\S]*?)\r?\n---\r?\n/.exec(text);
   if (!m) return null;
-  return Object.fromEntries(m[1].split(/\r?\n/).filter((l) => /^[a-z-]+:/.test(l)).map((l) => [l.slice(0, l.indexOf(":")), l.slice(l.indexOf(":") + 1).trim()]));
+  return Object.fromEntries(m[1].split(/\r?\n/).filter((l) => /^[A-Za-z-]+:/.test(l)).map((l) => [l.slice(0, l.indexOf(":")), l.slice(l.indexOf(":") + 1).trim()]));
 }
 
 function checkSkill(dir) {
@@ -48,6 +48,19 @@ function checkSkill(dir) {
   }
 }
 
+const MODELS = /^(opus|sonnet|haiku|inherit|claude-[a-z0-9-]+)$/;
+
+function checkAgent(file) {
+  const where = file.slice(root.length + 1);
+  const fm = frontmatter(readFileSync(file, "utf8"));
+  if (!fm) return fail(where, "no YAML frontmatter");
+  const base = basename(file, ".md");
+  if (fm.name !== base) fail(where, `name "${fm.name}" must match its file name "${base}"`);
+  if (!/^Use (when|to|for) /.test(fm.description ?? "")) fail(where, 'description must start with "Use when", "Use to" or "Use for"');
+  if (fm.model && !MODELS.test(fm.model)) fail(where, `model "${fm.model}" must be opus, sonnet, haiku, inherit or a claude- model id`);
+  for (const key of ["hooks", "mcpServers", "permissionMode"]) if (key in fm) fail(where, `"${key}" is ignored in plugin agents; use the plugin's hooks.json or .mcp.json`);
+}
+
 const market = readJSON(join(root, ".claude-plugin/marketplace.json"));
 if (market) {
   for (const key of ["name", "owner", "plugins"]) if (!market[key]) fail("marketplace.json", `missing "${key}"`);
@@ -63,12 +76,21 @@ if (market) {
       const pj = readJSON(manifest);
       if (pj && pj.name !== p.name) fail(`${p.source}/.claude-plugin/plugin.json`, `name "${pj.name}" must equal the marketplace entry "${p.name}"`);
     }
+    if (existsSync(manifest)) {
+      for (const dep of readJSON(manifest)?.dependencies ?? []) {
+        const id = typeof dep === "string" ? dep : `${dep.name}@${dep.marketplace ?? market.name}`;
+        const from = id.includes("@") ? id.split("@")[1] : market.name;
+        if (from !== market.name && !(market.allowCrossMarketplaceDependenciesOn ?? []).includes(from)) fail(where, `depends on "${id}", but "${from}" is not in allowCrossMarketplaceDependenciesOn`);
+      }
+    }
     const skills = join(dir, "skills");
-    if (!existsSync(skills)) {
-      fail(where, "has no skills/ folder");
+    const agents = join(dir, "agents");
+    if (!existsSync(skills) && !existsSync(agents)) {
+      fail(where, "has no skills/ or agents/ folder");
       continue;
     }
-    for (const s of readdirSync(skills, { withFileTypes: true })) if (s.isDirectory()) checkSkill(join(skills, s.name));
+    if (existsSync(skills)) for (const s of readdirSync(skills, { withFileTypes: true })) if (s.isDirectory()) checkSkill(join(skills, s.name));
+    if (existsSync(agents)) for (const a of readdirSync(agents)) if (a.endsWith(".md")) checkAgent(join(agents, a));
   }
 }
 

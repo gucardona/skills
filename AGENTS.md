@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Gustavo's personal skills, published as a Claude Code plugin marketplace. Skills follow the Agent Skills spec (https://agentskills.io/specification), so other agents can use them too.
+Gustavo's personal skills and agents, published as a Claude Code plugin marketplace. Skills follow the Agent Skills spec (https://agentskills.io/specification), so other agents can use them too.
 
 ## Default plugins (every project of Gustavo's)
 
@@ -30,7 +30,8 @@ Each project declares both in its committed `.claude/settings.json`, so a fresh 
 ```text
 .claude-plugin/marketplace.json     the catalog: one entry per plugin (name, source "./plugins/<name>", description)
 plugins/<plugin>/
-  .claude-plugin/plugin.json        name (equal to the marketplace entry), version, description, author
+  .claude-plugin/plugin.json        name (equal to the marketplace entry), version, description, author, dependencies
+  agents/<agent-name>.md            subagents the plugin ships (frontmatter: name = file name, description, tools, model…)
   skills/<skill-name>/
     SKILL.md                        frontmatter + the instructions an agent reads first
     references/*.md                 detail loaded on demand, linked from SKILL.md
@@ -39,7 +40,13 @@ plugins/<plugin>/
 scripts/validate.mjs                checks everything below; scripts/validate.test.mjs tests the checker
 ```
 
-Plugins group skills by area: `apps` holds the standard of Gustavo's web apps. Never write the apps' domain name in this repo: it may change, and the skills read it from the gastos.app repo. Make a new plugin only for a new area; otherwise add the skill to the plugin it belongs to.
+Plugins group skills and agents by area: `workflow` holds the development process and its agents, `apps` the standard of Gustavo's web apps (and depends on `workflow`). A dependency on a plugin from another marketplace needs that marketplace in `allowCrossMarketplaceDependenciesOn` in `marketplace.json`. Never write the apps' domain name in this repo: it may change, and the skills read it from the gastos.app repo. Make a new plugin only for a new area; otherwise add the skill to the plugin it belongs to.
+
+## Writing or changing an agent
+
+- `name` equal to the file name; `description` starts with "Use when", "Use to" or "Use for" and says when the orchestrator should call it.
+- Reviewers and readers are read-only (`tools: Read, Grep, Glob`), set `omitClaudeMd: true` and a `maxTurns`, and report findings only.
+- `model` is `opus`, `sonnet`, `haiku` or `inherit`. Plugin agents ignore `hooks`, `mcpServers` and `permissionMode`; the validator rejects them.
 
 ## Writing or changing a skill
 
@@ -63,5 +70,7 @@ Both run in CI on every push and PR. With the Claude Code CLI, `claude plugin va
 
 ## Git
 
-- Branch from `main` (`feat/<skill>`, `fix/<skill>`), Conventional Commits in pt-BR (`feat(app-standard): …`), PR with what changes and how it was tested, merge after green CI and Gustavo's ok.
+- Every change starts from an issue; the PR says `Closes #N`.
+- Branch from `main` (`feat/<skill>`, `fix/<skill>`), Conventional Commits in English (`feat(app-standard): …`) with `Refs #N`, a PR with what changes and how it was tested, merge after green CI and Gustavo's ok.
+- Everything in this repo is in English except the pt-BR words and copy the skills teach, and `README.pt-BR.md`.
 - End commits with the Co-Authored-By trailer the harness gives.
